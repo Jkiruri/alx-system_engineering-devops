@@ -1,2 +1,2 @@
 #!/bin/bash
-o - rwx, g-r, u + wx 8-James_Bond
+chmod 007 hello
