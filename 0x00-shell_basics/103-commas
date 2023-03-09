@@ -1,2 +1,2 @@
 #!/bin/bash
-ls -p1 | sed -e 's/[^0-9a-zA-Z/.]/\\&/g' | LC_COLLATE=C sort -df | tr '\n' ','
+ls -1aX | sed -e 's/^/"/' -e 's/\([^\/]\)$/\1",/' -e 's/\//\/",/' -e '1s/^/..\/,/' -e '2s/^/.\/,/' | tr -d '\n'
