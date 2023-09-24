@@ -1,6 +1,7 @@
-#!/usr/bin/env bash
 # Client configuration file
-# file with user config
-Host 35.231.28.100
-IdentityFile ~/.ssh/school
-PasswordAuthentication no
+Host qwerty
+  Hostname 35.175.64.149
+  User ubuntu
+  IdentitiesOnly yes
+  IdentityFile ~/.ssh/school
+  PasswordAuthentication no  
