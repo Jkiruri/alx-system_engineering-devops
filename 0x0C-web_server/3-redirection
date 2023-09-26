@@ -1,25 +1,61 @@
 #!/usr/bin/env bash
-# Configures an nginx server so that /redirect_me redirects to a new page
+# A script to install nginx on a server
+# - Nginx should be listening on port 80
+# - When querying Nginx at its root / with a GET request (requesting a page) using curl,
+#     it must return a page that contains the string `Hello World!`
+# - Configure Nginx so that its redirecting to another page permanently
 
-sudo apt-get update && sudo apt-get install nginx -y
+# Install nginx
+apt-get -y update
+apt-get -y install nginx
 
-sudo chown -R "$USER":"$USER" /var/www/html/index.nginx-debian.html
-sudo chown -R "$USER":"$USER" /etc/nginx/sites-available/default
+# Start nginx
+if [[ ! $(pgrep nginx) ]]; then
+    service nginx start
+fi
 
-echo "Hello World!" > /var/www/html/index.nginx-debian.html
+# Allow Nginx through the firewall
+ufw allow 'Nginx HTTP'
 
-redirection=\
-"server {
-	listen 80 default_server;
-	listen [::]:80 default_server;
-	root /var/www/html;
-	index index.html index.htm index.nginx-debian.html;
-	server_name _;
-	location /redirect_me {
-		return 301 https://www.youtube.com/watch?v=QH2-TGUlwu4;
-	}
-}"
+# Give the user ownership to website files for easy editing
+chown -R "$USER":"$USER" /var/www/html
+chmod -R 755 /var/www
 
-echo -e "$redirection" > /etc/nginx/sites-available/default
+# Get the first root directory of nginx from the configuration file
+root_dir=$(grep "root" /etc/nginx/sites-available/default | cut -d " " -f 2 | tr -d ";" | head -1)
 
-sudo service nginx restart
+# Create the directory if it doesn't exist
+if [[ ! -d $root_dir ]]; then
+    sudo mkdir -p "$root_dir"
+fi
+
+# Write `Hello World!` to the index.html file
+echo "Hello World!" > "$root_dir"/index.html
+
+# Check if Nginx is running and serving the expected content
+response=$(curl -s http://localhost)
+if [[ $response == "Hello World!" ]]; then
+  echo "Nginx installation and configuration successful!"
+else
+  echo "Nginx installation or configuration failed."
+  exit 1
+fi
+
+# Configure Nginx to redirect to another page permanently with a 301 Moved Permanently HTTP response
+sudo sed -i "/listen 80 default_server;/a rewrite ^/redirect_me https://linkedin.com/in/kevinkiruri/ permanent;" /etc/nginx/sites-available/default
+
+# Check if the configuration is valid
+if nginx -t | grep "successful"; then
+  echo "Nginx configuration failed."
+  exit 1
+fi
+
+# Reload Nginx
+nginx -s reload
+
+# Restart Nginx
+service nginx restart
+
+# Check if Nginx is redirecting to the expected page
+
+exit 0
